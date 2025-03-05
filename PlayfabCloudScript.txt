@@ -1,0 +1,280 @@
+handlers.setStartParameters = function (args) {
+    
+    var getTitleDataRequest = { "Keys": ["Players_Count"] };
+    var getTitleDataResponse = server.GetTitleData(getTitleDataRequest);
+    
+    var newCount = parseInt(getTitleDataResponse.Data["Players_Count"]) + 1;
+    
+    var setTitleDataRequest = {
+        "Key": "Players_Count",
+        "Value": newCount
+    };
+    var setTitleDataResponse = server.SetTitleData(setTitleDataRequest);
+    
+    var updateUserDataRequest = 
+    {
+        "PlayFabId": args.currentPlayerId,
+        "Data": 
+        {
+            "Avatar": "Avatar_01"
+        } 
+    }
+    
+    var UpdateUserDataResult = server.UpdateUserData(updateUserDataRequest);
+    
+    var updatePlayerStatisticsResult = server.UpdatePlayerStatistics({
+        PlayFabId: args.currentPlayerId,
+        Statistics: 
+        [
+            {
+                StatisticName: "IsMailSent",
+                Value: 0
+            },
+            {
+                StatisticName: "IsVerified",
+                Value: 0
+            },
+            {
+                StatisticName: "IsCounted",
+                Value: 1
+            },
+            {
+                StatisticName: "IsRegistrationDone",
+                Value: 0
+            },
+            {
+                StatisticName: "Player_Rating",
+                Value: 0
+            },
+            {
+                StatisticName: "Games_Count",
+                Value: 0
+            },
+            {
+                StatisticName: "Wins",
+                Value: 0
+            },
+            {
+                StatisticName: "Losses",
+                Value: 0
+            },
+            {
+                StatisticName: "Experience",
+                Value: 0
+            },
+            {
+                StatisticName: "Level",
+                Value: 0
+            },
+            {
+                StatisticName: "Player_Number",
+                Value: newCount
+            }
+        ]
+    });
+    
+    return { 
+        Player_Rating: 0,
+        Wins: 0,
+        Losses: 0,
+        Experience: 0,
+        Level: 0,
+        Player_Number: newCount
+    };
+}
+
+handlers.changePlayerWinRateStatistics = function (args) {
+    
+    var updatePlayerStatisticsResult = server.UpdatePlayerStatistics(
+        {
+            PlayFabId: args.currentPlayerId,
+            Statistics: 
+                [
+                    {
+                        StatisticName: "Player_Rating",
+                        Value: args.rating
+                    },
+                    {
+                        StatisticName: "Games_Count",
+                        Value: args.gameCount
+                    },
+                    {
+                        StatisticName: "Wins",
+                        Value: args.wons
+                    },
+                    {
+                        StatisticName: "Losses",
+                        Value: args.losses
+                    }
+                ]
+        }
+    );
+}
+
+handlers.setRegistrationDoneParameter = function (args) {
+    
+    var updatePlayerStatisticsResult = server.UpdatePlayerStatistics(
+        {
+            PlayFabId: args.currentPlayerId,
+            Statistics: 
+                [
+                    {
+                        StatisticName: "IsRegistrationDone",
+                        Value: 1
+                    }
+                ]
+        }
+    );
+}
+
+
+handlers.getPlayerWinRateStatistics = function (args) {
+    
+    var ratingValue = getPlayerStatisticValue(args.currentPlayerId, "Player_Rating");
+    var gamesCount = getPlayerStatisticValue(args.currentPlayerId, "Games_Count");
+    var wonsCount = getPlayerStatisticValue(args.currentPlayerId, "Wins");
+    var lossesCount = getPlayerStatisticValue(args.currentPlayerId, "Losses");
+    
+    
+    return { 
+        Player_Rating: ratingValue,
+        Games_Count: gamesCount,
+        Wins: wonsCount,
+        Losses: lossesCount
+    };
+}
+
+handlers.getDataForLobby = function (args) {
+    
+    var userID = args.currentPlayerId;
+    
+    var ratingValue = getPlayerStatisticValue(userID, "Player_Rating");
+    var avatarID = getPlayerAvatarID(userID);
+    var playerDisplayName = getPlayerDisplayName(userID);
+     
+    return { 
+        Player_Rating: ratingValue,
+        Avatar: avatarID,
+        Display_Name: playerDisplayName
+    };
+}
+
+handlers.getEndGameData = function (args) {
+    
+    var userID = args.currentPlayerId;
+    
+    var ratingValue = getPlayerStatisticValue(userID, "Player_Rating");
+    var wonsCount = getPlayerStatisticValue(userID, "Wins");
+    var lossesCount = getPlayerStatisticValue(userID, "Losses");
+    var gamesCount = getPlayerStatisticValue(userID, "Games_Count");
+    var experience = getPlayerStatisticValue(userID, "Experience");
+    var level = getPlayerStatisticValue(userID, "Level");
+     
+    return { 
+        Player_Rating: ratingValue,
+        GamesCount: gamesCount,
+        WonsCount: wonsCount,
+        LossesCount: lossesCount,
+        Exp: experience,
+        Lvl: level
+    };
+}
+
+handlers.setEndGameData = function (args) {
+    
+    var updatePlayerStatisticsResult = server.UpdatePlayerStatistics(
+        {
+            PlayFabId: args.currentPlayerId,
+            Statistics: 
+                [
+                    {
+                        StatisticName: "Player_Rating",
+                        Value: args.rating
+                    },
+                    {
+                        StatisticName: "Games_Count",
+                        Value: args.gameCount
+                    },
+                    {
+                        StatisticName: "Wins",
+                        Value: args.wons
+                    },
+                    {
+                        StatisticName: "Losses",
+                        Value: args.losses
+                    },
+                    {
+                        StatisticName: "Experience",
+                        Value: args.exp
+                    },
+                    {
+                        StatisticName: "Level",
+                        Value: args.lvl
+                    }
+                ]
+        }
+    );
+}
+
+handlers.setUserAvatar = function (args) {
+    
+    var updateUserDataRequest = 
+    {
+        "PlayFabId": args.currentPlayerId,
+        "Data": 
+        {
+            "Avatar": args.avatarID
+        } 
+    }
+    
+    var UpdateUserDataResult = server.UpdateUserData(updateUserDataRequest);
+    
+}
+
+handlers.addCurrency = function (args) {
+    
+    server.AddUserVirtualCurrency (
+        {
+          PlayFabId: args.currentPlayerId,
+          VirtualCurrency: args.virtualCurrency,
+          Amount: args.amount
+        })
+}
+
+function getPlayerStatisticValue(currentPlayerId, statisticName) {
+
+    var playerStats = server.GetPlayerStatistics({ 
+        PlayFabId: currentPlayerId
+    }).Statistics;
+    
+    var statisticValue;
+     
+    for (i = 0; i < playerStats.length; ++i) {
+        if (playerStats[i].StatisticName === statisticName) 
+        {
+            statisticValue = playerStats[i].Value;
+            break;
+        }
+    }
+    
+    return statisticValue;
+}
+
+function getPlayerAvatarID(currentPlayerId) {
+    var getPlayerData = server.GetUserData
+    ({
+        PlayFabId: currentPlayerId,
+        Keys: ["Avatar"],
+    });
+     
+    var avatarID = getPlayerData.Data["Avatar"].Value;
+    
+    return avatarID;
+}
+
+function getPlayerDisplayName(currentPlayerId) {
+    var getAccInfoRequest = server.GetUserAccountInfo({"PlayFabId" : currentPlayerId});
+    var playerDisplayName = getAccInfoRequest.UserInfo.TitleInfo.DisplayName
+    
+    return playerDisplayName;
+}
